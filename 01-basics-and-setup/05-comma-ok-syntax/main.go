@@ -30,7 +30,7 @@ func main() {
 	fmt.Println(s, ok3)
 
 	// is i an int ??
-	// i sint an int so its false and n defaults to 0
+	// i isnt an int so its false and n defaults to 0
 	n, ok4 := i.(int)
 	fmt.Println(n, ok4)
 
