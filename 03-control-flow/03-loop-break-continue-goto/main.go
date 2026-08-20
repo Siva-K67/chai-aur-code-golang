@@ -53,4 +53,26 @@ loop:
 		goto loop
 	}
 
+	// use of _
+	fruits := []string{"apple", "banana", "orange"}
+
+	//print with index
+	//range gives 2 values, index and value itself at that index
+	fmt.Println("----with index----")
+	for i, fruit := range fruits {
+		fmt.Println(i, fruit)
+	}
+
+	//we dont want the index, so we just replace it by _
+	fmt.Println("----Without index----")
+	for _, fruit := range fruits {
+		fmt.Println(fruit)
+	}
+
+	// what happens if you declare i but never use it (uncomment to see the error)
+	// for i, fruit := range fruits {
+	// 	fmt.Println(fruit)
+	// }
+	// ^ this would fail to compile: "i declared and not used"
+
 }
