@@ -14,10 +14,16 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 	//  which sends it back to the browser as the response.
 }
 
+func aboutHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "This is the about page of Hajime no ippo!")
+}
+
 func main() {
 
 	//this is routing: "when someone visits /, run homeHandler."
 	http.HandleFunc("/", homeHandler)
+	http.HandleFunc("/about", aboutHandler)
+
 	fmt.Println("server starting on port 8080")
 
 	err := http.ListenAndServe(":8080", nil)
