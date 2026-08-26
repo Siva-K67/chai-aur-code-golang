@@ -40,4 +40,20 @@ func main() {
 	}
 
 	fmt.Println("succesfully connected to postgres !")
+
+	//create the courses tabkle if it dosent exist already
+	createTableQuery := `
+	CREATE TABLE IF NOT EXISTS courses(
+	id SERIAL PRIMARY KEY,
+	name TEXT NOT NULL,
+	price INT NOT NULL
+	)`
+
+	// db.Exec(...) — used for SQL statements that don't return rows
+	// (CREATE, INSERT, UPDATE, DELETE)
+	_, err = db.Exec(createTableQuery)
+	if err != nil {
+		log.Fatal("error creating table: ", err)
+	}
+	fmt.Println("courses table ready")
 }
