@@ -72,6 +72,29 @@ func getCourseByID(db *sql.DB, id int) (Course, error) {
 	return c, nil
 }
 
+// function UPDATEs an existing course's name and price by ID
+func updateCourse(db *sql.DB, id int, name string, price int) error {
+	updateQuery := `UPDATE courses SET name = $1, price = $2 WHERE id = $3`
+
+	result, err := db.Exec(updateQuery, name, price, id)
+	if err != nil {
+		return err
+	}
+
+	// RowsAffected tells us how many rows the UPDATE actually changed
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	// if 0 rows changed, that ID didn't exist
+	if rowsAffected == 0 {
+		return fmt.Errorf("course with id %d not found", id)
+	}
+
+	return nil
+}
+
 func main() {
 	//load the .env file
 	err := godotenv.Load("../.env")
@@ -156,6 +179,22 @@ func main() {
 		fmt.Println("error:", err2)
 	} else {
 		fmt.Println("found:", course2.ID, course2.Name, course2.Price)
+	}
+
+	// update course with id 2
+	err = updateCourse(db, 2, "One Piece by Takeshi Obada", 599)
+	if err != nil {
+		fmt.Println("error updating:", err)
+	} else {
+		fmt.Println("course updated successfully")
+	}
+
+	// try updating one that doesn't exist
+	err = updateCourse(db, 999, "Ghost Course", 0)
+	if err != nil {
+		fmt.Println("error updating:", err)
+	} else {
+		fmt.Println("course updated successfully")
 	}
 
 }
