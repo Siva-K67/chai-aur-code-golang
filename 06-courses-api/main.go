@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -15,6 +16,60 @@ type Course struct {
 	ID    int    `json:"id"`
 	Name  string `json:"name"`
 	Price int    `json:"price"`
+}
+
+// function to retrive all the courses
+func getAllCourses(db *sql.DB) ([]Course, error) {
+
+	//rows doesn't hold all the data at once, sitting there ready to index into.
+	// It's a live connection pointing at one row at a time, streaming from the
+	// database as you ask for more
+
+	// SELECT id, name, price (not SELECT *) - Scan matches columns by POSITION, not name.
+	// If we used SELECT * and the table's column order ever changed (e.g. a new
+	// column added in the middle), Scan would silently misalign or error out,
+	// since it has no idea about column names - only "1st result -> 1st arg", etc
+	rows, err := db.Query("SELECT id, name, price FROM courses")
+	if err != nil {
+		return nil, err
+	}
+
+	//close the result set when done
+	defer rows.Close()
+
+	var courses []Course
+
+	// rows.Next() advances to the next row - returns false when there are none left
+	for rows.Next() {
+		var c Course
+		// Scan copies the current row's columns into c's fields, in order given in Scan's args
+		err := rows.Scan(&c.ID, &c.Name, &c.Price)
+		if err != nil {
+			return nil, err
+		}
+		courses = append(courses, c)
+	}
+
+	return courses, nil
+}
+
+// function to fetch a single course
+func getCourseByID(db *sql.DB, id int) (Course, error) {
+	var c Course
+
+	// QueryRow expects exactly one row back - simpler than Query for a single record
+	row := db.QueryRow("SELECT id, name, price FROM courses WHERE id=$1", id)
+
+	err := row.Scan(&c.ID, &c.Name, &c.Price)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return Course{}, fmt.Errorf("course with id %d not found: %w", id, err)
+		}
+
+		return Course{}, err
+	}
+
+	return c, nil
 }
 
 func main() {
@@ -64,17 +119,43 @@ func main() {
 	}
 	fmt.Println("courses table ready")
 
-	//insert a new course
-	// notice ID is left unset. because this PK is serial
-	newCourse := Course{Name: "Boxing Guide by Ippo Makunochi", Price: 499}
+	// //insert a new course
+	// // notice ID is left unset. because this PK is serial
+	// newCourse := Course{Name: "Death NOte by Tsugumi Ohba", Price: 300}
 
-	// $1 and $2 are placeholders
-	insertQuery := `INSERT INTO courses (name,price) VALUES ($1,$2)`
+	// // $1 and $2 are placeholders
+	// insertQuery := `INSERT INTO courses (name,price) VALUES ($1,$2)`
 
-	_, err = db.Exec(insertQuery, newCourse.Name, newCourse.Price)
+	// _, err = db.Exec(insertQuery, newCourse.Name, newCourse.Price)
+	// if err != nil {
+	// 	log.Fatal("error inserting course", err)
+	// }
+	// fmt.Println("course inserted succesfully")
+
+	//query all of the courses
+	// courses, err := getAllCourses(db)
+	// if err != nil {
+	// 	log.Fatal("error fetching the courses:", err)
+	// }
+
+	// for _, c := range courses {
+	// 	fmt.Println(c.ID, c.Name, c.Price)
+	// }
+
+	// try fetching a course that should exist
+	course, err := getCourseByID(db, 5)
 	if err != nil {
-		log.Fatal("error inserting course", err)
+		fmt.Println("error:", err)
+	} else {
+		fmt.Println("found:", course.ID, course.Name, course.Price)
 	}
-	fmt.Println("course inserted succesfully")
+
+	// try fetching one that shouldn't exist
+	course2, err2 := getCourseByID(db, 999)
+	if err2 != nil {
+		fmt.Println("error:", err2)
+	} else {
+		fmt.Println("found:", course2.ID, course2.Name, course2.Price)
+	}
 
 }
