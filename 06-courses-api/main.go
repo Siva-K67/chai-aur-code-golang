@@ -95,6 +95,26 @@ func updateCourse(db *sql.DB, id int, name string, price int) error {
 	return nil
 }
 
+// Function to DELETE a course by ID - same RowsAffected pattern as update
+func deleteCourse(db *sql.DB, id int) error {
+	deleteQuery := `DELETE FROM courses WHERE id = $1`
+
+	result, err := db.Exec(deleteQuery, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("course with id %d not found", id)
+	}
+
+	return nil
+}
 func main() {
 	//load the .env file
 	err := godotenv.Load("../.env")
@@ -165,36 +185,52 @@ func main() {
 	// 	fmt.Println(c.ID, c.Name, c.Price)
 	// }
 
-	// try fetching a course that should exist
-	course, err := getCourseByID(db, 5)
+	// // try fetching a course that should exist
+	// course, err := getCourseByID(db, 5)
+	// if err != nil {
+	// 	fmt.Println("error:", err)
+	// } else {
+	// 	fmt.Println("found:", course.ID, course.Name, course.Price)
+	// }
+
+	// // try fetching one that shouldn't exist
+	// course2, err2 := getCourseByID(db, 999)
+	// if err2 != nil {
+	// 	fmt.Println("error:", err2)
+	// } else {
+	// 	fmt.Println("found:", course2.ID, course2.Name, course2.Price)
+	// }
+
+	// // update course with id 2
+	// err = updateCourse(db, 2, "One Piece by Takeshi Obada", 599)
+	// if err != nil {
+	// 	fmt.Println("error updating:", err)
+	// } else {
+	// 	fmt.Println("course updated successfully")
+	// }
+
+	// // try updating one that doesn't exist
+	// err = updateCourse(db, 999, "Ghost Course", 0)
+	// if err != nil {
+	// 	fmt.Println("error updating:", err)
+	// } else {
+	// 	fmt.Println("course updated successfully")
+	// }
+
+	// delete a course that exists
+	err = deleteCourse(db, 3)
 	if err != nil {
-		fmt.Println("error:", err)
+		fmt.Println("error deleting:", err)
 	} else {
-		fmt.Println("found:", course.ID, course.Name, course.Price)
+		fmt.Println("course deleted successfully")
 	}
 
-	// try fetching one that shouldn't exist
-	course2, err2 := getCourseByID(db, 999)
-	if err2 != nil {
-		fmt.Println("error:", err2)
-	} else {
-		fmt.Println("found:", course2.ID, course2.Name, course2.Price)
-	}
-
-	// update course with id 2
-	err = updateCourse(db, 2, "One Piece by Takeshi Obada", 599)
+	// try deleting one that doesn't exist
+	err = deleteCourse(db, 777)
 	if err != nil {
-		fmt.Println("error updating:", err)
+		fmt.Println("error deleting:", err)
 	} else {
-		fmt.Println("course updated successfully")
-	}
-
-	// try updating one that doesn't exist
-	err = updateCourse(db, 999, "Ghost Course", 0)
-	if err != nil {
-		fmt.Println("error updating:", err)
-	} else {
-		fmt.Println("course updated successfully")
+		fmt.Println("course deleted successfully")
 	}
 
 }
