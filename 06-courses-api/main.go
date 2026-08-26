@@ -10,6 +10,13 @@ import (
 	_ "github.com/lib/pq" // blank import - registers the driver, we don't call it directly
 )
 
+// Course represents one row in our courses table
+type Course struct {
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
+	Price int    `json:"price"`
+}
+
 func main() {
 	//load the .env file
 	err := godotenv.Load("../.env")
@@ -56,4 +63,18 @@ func main() {
 		log.Fatal("error creating table: ", err)
 	}
 	fmt.Println("courses table ready")
+
+	//insert a new course
+	// notice ID is left unset. because this PK is serial
+	newCourse := Course{Name: "Boxing Guide by Ippo Makunochi", Price: 499}
+
+	// $1 and $2 are placeholders
+	insertQuery := `INSERT INTO courses (name,price) VALUES ($1,$2)`
+
+	_, err = db.Exec(insertQuery, newCourse.Name, newCourse.Price)
+	if err != nil {
+		log.Fatal("error inserting course", err)
+	}
+	fmt.Println("course inserted succesfully")
+
 }
