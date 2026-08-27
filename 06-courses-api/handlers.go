@@ -147,7 +147,7 @@ func coursesHandler(w http.ResponseWriter, r *http.Request) {
 
 // courseByIDHandler handles /courses/{id} - GET (one), PUT (update), DELETE
 func courseByIDHandler(w http.ResponseWriter, r *http.Request) {
-	// extract the id from the URL path, e.g. "/courses/3" -> "3"
+	// extract the id from the URL path, e.g. "/courses/3" -> "3" (note its a string not a number)
 	idStr := strings.TrimPrefix(r.URL.Path, "/courses/")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
