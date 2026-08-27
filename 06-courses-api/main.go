@@ -2,14 +2,22 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq" // blank import - registers the driver, we don't call it directly
 )
+
+// db is package-level so every handler function can use it,
+// without us having to pass it into each one manually
+var db *sql.DB
 
 // Course represents one row in our courses table
 type Course struct {
@@ -21,7 +29,7 @@ type Course struct {
 // function to retrive all the courses
 func getAllCourses(db *sql.DB) ([]Course, error) {
 
-	//rows doesn't hold all the data at once, sitting there ready to index into.
+	//rows doesn't hold all the data at once.
 	// It's a live connection pointing at one row at a time, streaming from the
 	// database as you ask for more
 
@@ -72,6 +80,12 @@ func getCourseByID(db *sql.DB, id int) (Course, error) {
 	return c, nil
 }
 
+// inserts the course into the db
+func insertCourse(name string, price int) error {
+	_, err := db.Exec("INSERT INTO courses (name,price) VALUES ($1,$2)", name, price)
+	return err
+}
+
 // function UPDATEs an existing course's name and price by ID
 func updateCourse(db *sql.DB, id int, name string, price int) error {
 	updateQuery := `UPDATE courses SET name = $1, price = $2 WHERE id = $3`
@@ -115,6 +129,83 @@ func deleteCourse(db *sql.DB, id int) error {
 
 	return nil
 }
+
+// courseHandler handler /courses api.
+func coursesHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		courses, err := getAllCourses(db)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(courses)
+
+	case http.MethodPost:
+		var newCourse Course
+		if err := json.NewDecoder(r.Body).Decode(&newCourse); err != nil {
+			http.Error(w, "invalid JSON", http.StatusBadRequest)
+			return
+		}
+		if err := insertCourse(newCourse.Name, newCourse.Price); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"message": "course created"})
+
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+// courseByIDHandler handles /courses/{id} - GET (one), PUT (update), DELETE
+func courseByIDHandler(w http.ResponseWriter, r *http.Request) {
+	// extract the id from the URL path, e.g. "/courses/3" -> "3"
+	idStr := strings.TrimPrefix(r.URL.Path, "/courses/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		course, err := getCourseByID(db, id)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(course)
+
+	case http.MethodPut:
+		var updated Course
+		if err := json.NewDecoder(r.Body).Decode(&updated); err != nil {
+			http.Error(w, "invalid JSON", http.StatusBadRequest)
+			return
+		}
+		if err := updateCourse(db, id, updated.Name, updated.Price); err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"message": "course updated"})
+
+	case http.MethodDelete:
+		if err := deleteCourse(db, id); err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"message": "course deleted"})
+
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}
 func main() {
 	//load the .env file
 	err := godotenv.Load("../.env")
@@ -131,7 +222,7 @@ func main() {
 	)
 
 	//sql.Open doesnt actuakly connect yet, just prepares to connect
-	db, err := sql.Open("postgres", connStr)
+	db, err = sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal("error opening db", err)
 	}
@@ -217,20 +308,28 @@ func main() {
 	// 	fmt.Println("course updated successfully")
 	// }
 
-	// delete a course that exists
-	err = deleteCourse(db, 3)
-	if err != nil {
-		fmt.Println("error deleting:", err)
-	} else {
-		fmt.Println("course deleted successfully")
-	}
+	// // delete a course that exists
+	// err = deleteCourse(db, 3)
+	// if err != nil {
+	// 	fmt.Println("error deleting:", err)
+	// } else {
+	// 	fmt.Println("course deleted successfully")
+	// }
 
-	// try deleting one that doesn't exist
-	err = deleteCourse(db, 777)
-	if err != nil {
-		fmt.Println("error deleting:", err)
-	} else {
-		fmt.Println("course deleted successfully")
+	// // try deleting one that doesn't exist
+	// err = deleteCourse(db, 777)
+	// if err != nil {
+	// 	fmt.Println("error deleting:", err)
+	// } else {
+	// 	fmt.Println("course deleted successfully")
+	// }
+
+	http.HandleFunc("/courses", coursesHandler)
+	http.HandleFunc("/courses/", courseByIDHandler)
+
+	fmt.Println("server starting on port 8080...")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		fmt.Println("server error:", err)
 	}
 
 }
