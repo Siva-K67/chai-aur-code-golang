@@ -15,6 +15,11 @@ sidestepping race conditions in a different way entirely, often considered
 cleaner/more idiomatic in Go for many use cases
 (though mutexes are still absolutely the right tool sometimes, like your counter example).
 
+
+by default, channels are unbuffered, meaning a send
+blocks until someone's ready to receive, and a receive
+blocks until someone sends.
+
 */
 
 func main() {
