@@ -13,6 +13,13 @@ func main() {
 }
 
 /*
+
+output
+go run .
+fatal error: all goroutines are asleep - deadlock!
+*/
+
+/*
 Recall from stage 5: an unbuffered channel send blocks until
 something is ready to receive it.
 Here, messages <- "hello" blocks... and waits... and waits — but there's no
