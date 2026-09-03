@@ -32,7 +32,7 @@ Each folder is a self-contained topic with its own `main.go` (and tests, where a
 - Every file was typed out manually — no copy-pasting from tutorials — to build real familiarity with Go syntax and idioms
 - Concepts build progressively: basics → data structures → control flow → error handling → web/files → a real API project → concurrency → interfaces → testing → context → generics → logging
 - The `06-courses-api` folder marks the shift from isolated concept snippets to an actual working project
-- To run the files, type **go run .** in the terminal. To run the test files, use **go test** or **got test -v**.
+- To run the files, type '**go run .**' in the terminal. To run the test files, use '**go test**' or '**go test -v**'.
 
 ## 🛠️ Tech
 
