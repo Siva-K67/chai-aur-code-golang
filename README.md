@@ -4,7 +4,7 @@ A hands-on journey through Go fundamentals to intermediate backend concepts, bui
 
 ## 📚 Learning Sources
 
-- **[Chai aur Code]([https://www.youtube.com/@chaiaurcode](https://youtube.com/playlist?list=PLRAV69dS1uWQGDQoBYMZWKjzuhCaOnBpa&si=pOk7wSbOJvHWnwGr))** by Hitesh Choudhary — YouTube playlist covering Go fundamentals
+- **[Chai aur Code](https://youtube.com/playlist?list=PLRAV69dS1uWQGDQoBYMZWKjzuhCaOnBpa&si=pOk7wSbOJvHWnwGr)** by Hitesh Choudhary — YouTube playlist covering Go fundamentals
 - **[How I Write HTTP Services in Go After 13 Years](https://grafana.com/blog/how-i-write-http-services-in-go-after-13-years/)** — Grafana Labs blog on idiomatic, production-grade HTTP service design in Go
 - Claude (Anthropic) — used as a learning aid for debugging, explanations, and reinforcing concepts
 
